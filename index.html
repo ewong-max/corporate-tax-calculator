@@ -212,7 +212,7 @@
       const AT = Math.max(0, Number(atInput) || 0);
 
       // Reverse-engineer the taxable income implied by each tax payable, so we
-      // can still show the tier breakdown and the income-equivalent figures.
+      // can still show the tier breakdown and the max-income figures.
       const estIncome = useMemo(() => impliedIncome(ET, isNonSME), [ET, isNonSME]);
       const actIncome = useMemo(() => impliedIncome(AT, isNonSME), [AT, isNonSME]);
       const est = useMemo(() => computeTax(estIncome, isNonSME), [estIncome, isNonSME]);
@@ -223,9 +223,6 @@
       const marginBuffer = 0.3 * AT;
       const amountSubjectToIncrease = Math.max(0, shortfall - marginBuffer);
       const penalty = amountSubjectToIncrease * 0.1;
-
-      const marginalRate = topMarginalRate(actIncome, isNonSME);
-      const incomeEquivalent = marginalRate > 0 ? amountSubjectToIncrease / marginalRate : 0;
 
       // Highest actual taxable income the client could report without triggering
       // the penalty = the income whose tax equals the safe ceiling (ET ÷ 0.7).
@@ -340,12 +337,19 @@
                     : "Already within the safe zone — no reduction needed"}
                   tone={isOverSafe ? "amber" : "green"}
                 />
-                <StatCard
-                  label="Maximum Taxable Income Without Penalty"
-                  value={RM(maxSafeIncome)}
-                  sub="Income matching the safe tax ceiling (ET ÷ 0.7)"
-                  tone={isOverSafe ? "amber" : "green"}
-                />
+                <div className={`rounded-xl border p-4 ${isOverSafe ? "bg-amber-50 border-amber-200" : "bg-emerald-50 border-emerald-200"}`}>
+                  <p className="text-xs uppercase tracking-wide text-slate-500 font-medium">Maximum Without Penalty</p>
+                  <div className="mt-2 space-y-2">
+                    <div>
+                      <p className="text-[11px] text-slate-500">Maximum Tax Payable (ET ÷ 0.7)</p>
+                      <p className="text-lg font-bold text-slate-800">{RM(maxSafeAT)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-slate-500">Maximum Taxable Income</p>
+                      <p className="text-lg font-bold text-slate-800">{RM(maxSafeIncome)}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Penalty breakdown */}
@@ -362,14 +366,6 @@
                     value={RM(amountSubjectToIncrease)}
                     strong
                   />
-                  <Row
-                    label="Taxable Income Equivalent of Penalty Base"
-                    value={RM(incomeEquivalent)}
-                    indent
-                  />
-                  <p className="pl-4 pt-1 text-[11px] text-slate-400">
-                    Income that overshot the 30% safe zone, grossed up at the {pct(marginalRate)} top marginal rate.
-                  </p>
                 </div>
 
                 {/* Penalty highlight */}
